@@ -27,71 +27,103 @@ import zoologicoImg from '../../imgs/zoologico.png'
 import spyManImg from '../../imgs/spy-m.png'
 import spyWomImg from '../../imgs/spy-w.png'
 import versoImg from '../../imgs/verso.png'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { twMerge } from 'tailwind-merge'
 
 const CARD_KEY_IMG = {
-    'asilo': asiloImg,
-    'autodromo': autodromoImg,
-    'balada': baladaImg,
-    'biblioteca': bibliotecaImg,
-    'casamento': casamentoImg,
-    'cemiterio': cemiterioImg,
-    'clubedejazz': clubedefazzImg,
-    'convencaodejogos': convencaodejogosImg,
-    'estadio': estadioImg,
-    'exposicaodegatos': exposicaodegatosImg,
-    'fabricadedoces': fabricadedocesImg,
-    'metro': metroImg,
-    'minadecarvao': minadecarvaoImg,
-    'museudearte': museudearteImg,
-    'nacoesunidas': nacoesunidasImg,
-    'obra': obraImg,
-    'onibusturistico': onibusturisticoImg,
-    'parquedediversoes': parquedediversoesImg,
-    'patinacaonogelohockey': patinacaonogelohockeyImg,
-    'portonaval': portonavalImg,
-    'postodegasolina': postodegasolinaImg,
-    'prisao': prisaoImg,
-    'showderock': showderockImg,
-    'vinicola': vinicolaImg,
-    'zoologico': zoologicoImg,
-    'spy': {
-        0: spyManImg,
-        1: spyWomImg
-    }
-};
-
-interface CardProps {
-    type: keyof typeof CARD_KEY_IMG;
-    label: string
+  asilo: asiloImg,
+  autodromo: autodromoImg,
+  balada: baladaImg,
+  biblioteca: bibliotecaImg,
+  casamento: casamentoImg,
+  cemiterio: cemiterioImg,
+  clubedejazz: clubedefazzImg,
+  convencaodejogos: convencaodejogosImg,
+  estadio: estadioImg,
+  exposicaodegatos: exposicaodegatosImg,
+  fabricadedoces: fabricadedocesImg,
+  metro: metroImg,
+  minadecarvao: minadecarvaoImg,
+  museudearte: museudearteImg,
+  nacoesunidas: nacoesunidasImg,
+  obra: obraImg,
+  onibusturistico: onibusturisticoImg,
+  parquedediversoes: parquedediversoesImg,
+  patinacaonogelohockey: patinacaonogelohockeyImg,
+  portonaval: portonavalImg,
+  postodegasolina: postodegasolinaImg,
+  prisao: prisaoImg,
+  showderock: showderockImg,
+  vinicola: vinicolaImg,
+  zoologico: zoologicoImg,
 }
 
-function getSrc(type: CardProps['type']) {
-    if (type === 'spy') {
-        const zeroOrOne = Math.floor(Math.random() * 2) as 0 | 1;
-        return CARD_KEY_IMG[type][zeroOrOne]
-    }
-    return CARD_KEY_IMG[type] ?? ''
+const SPY_CARD = {
+  0: spyManImg,
+  1: spyWomImg,
+}
+
+type GetSrcProps = keyof typeof CARD_KEY_IMG | 'spy'
+
+export interface CardProps {
+  type: GetSrcProps
+  label: string
+}
+
+function getSrc(type: GetSrcProps) {
+  if (type === 'spy') {
+    const zeroOrOne = Math.floor(Math.random() * 2) as 0 | 1
+    return SPY_CARD[zeroOrOne]
+  }
+
+  return CARD_KEY_IMG[type] ?? ''
 }
 
 export function Card({ type, label }: CardProps) {
-    const [isVisible, setIsVisible] = useState(true);
-    const src = useMemo(() => getSrc(type), [type]);
+  const [isVisible, setIsVisible] = useState(true)
+  const src = useMemo(() => getSrc(type), [type])
+  const timeoutToHideCardRef = useRef<null | NodeJS.Timer>(null)
 
-    return (
-        <div className="" onClick={() => setIsVisible(prev => !prev)}>
-            {isVisible ? <Image
-                className='-rotate-90'
-                src={src}
-                alt="Picture of the author"
-            /> : <Image
-                className='rotate-90'
-                src={versoImg}
-                alt="Picture of the author"
-            />}
+  useEffect(() => {
+    timeoutToHideCardRef.current = setTimeout(() => {
+      setIsVisible(false)
+    }, 5000)
+  }, [])
 
-            <h1 className='text-4xl'>{isVisible && label}</h1>
+  const flipCard = () => {
+    const newValue = !isVisible
+    if (timeoutToHideCardRef.current) {
+      clearTimeout(timeoutToHideCardRef.current)
+    }
+    setTimeout(() => {
+      setIsVisible(false)
+    }, 5000)
+    setIsVisible(newValue)
+  }
 
-        </div>
-    )
+  const text = label === 'spy' ? 'Você é o espião!' : `Você é o ${label}`
+
+  return (
+    <div
+      className="flex flex-col relative items-center justify-center"
+      onClick={flipCard}
+    >
+      <div className="px-2 relative">
+        {isVisible ? (
+          <Image className="w-full h-full" src={src} alt="" />
+        ) : (
+          <Image className="w-[343px] h-[240x]" src={versoImg} alt="" />
+        )}
+      </div>
+
+      <h1
+        className={twMerge(
+          'text-2xl text-center pt-4 text-white',
+          isVisible ? '' : 'pb-4',
+        )}
+      >
+        {isVisible ? text : 'Virar a carta'}
+      </h1>
+    </div>
+  )
 }
